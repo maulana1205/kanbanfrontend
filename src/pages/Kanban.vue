@@ -1,49 +1,52 @@
 <template>
   <div class="p-6">
-    <h1 class="text-2xl font-bold">My Kanban Board</h1>
-    <p class="mt-2 text-gray-600">Welcome, {{ auth.user?.Name }}</p>
+    <h1 class="text-2xl font-bold">My Tasks</h1>
+    <p class="mt-2 text-gray-600">Welcome, {{ auth.user?.name }}</p>
 
     <div class="kanban-board mt-6">
-      <div
-        v-for="column in columns"
-        :key="column.status"
-        class="kanban-column"
-      >
-        <h2 class="text-lg font-semibold mb-3">{{ column.label }}</h2>
+      <div v-for="col in columns" :key="col.status" class="kanban-column">
+        <h2 class="text-lg font-semibold mb-3">{{ col.label }}</h2>
 
-        <draggable
-          :list="tasksByStatus[column.status]"
-          group="tasks"
-          item-key="id"
-          @end="onDragEnd($event, column.status)"
+        <div
+          v-for="task in tasksByStatus[col.status]"
+          :key="task.id"
+          class="kanban-card"
         >
-          <template #item="{ element: task }">
-            <div class="kanban-card cursor-pointer">
-              <p class="font-medium">{{ task.title }}</p>
-              <p class="text-sm text-gray-500">{{ task.description }}</p>
-            </div>
-          </template>
+          <p class="font-medium">{{ task.title }}</p>
+          <p class="text-sm text-gray-500">{{ task.description }}</p>
+          <div class="mt-2 flex gap-2">
+            <button
+              v-if="task.status === 'todo'"
+              @click="updateTaskStatus(task, 'in_progress')"
+              class="px-2 py-1 text-sm bg-blue-500 text-white rounded"
+            >
+              Start Progress
+            </button>
+            <button
+              v-if="task.status === 'in_progress'"
+              @click="updateTaskStatus(task, 'done')"
+              class="px-2 py-1 text-sm bg-green-500 text-white rounded"
+            >
+              Mark as Done
+            </button>
+          </div>
+        </div>
 
-          <template #footer>
-            <div v-if="tasksByStatus[column.status].length === 0" class="text-gray-400 text-sm">
-              No tasks assigned to you
-            </div>
-          </template>
-        </draggable>
+        <div v-if="tasksByStatus[col.status].length === 0" class="text-gray-400 text-sm mt-2">
+          No tasks
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from "vue";
-import draggable from "vuedraggable";
+import { reactive, onMounted } from "vue";
 import { useAuthStore } from "@/stores/auth";
-import axios from "axios";
+import { useTaskStore } from "@/stores/tasks";
 
 const auth = useAuthStore();
-const tasks = ref([]);
-const loading = ref(false);
+const taskStore = useTaskStore();
 
 const columns = [
   { status: "todo", label: "📋 Todo" },
@@ -57,44 +60,36 @@ const tasksByStatus = reactive({
   done: [],
 });
 
-// Fetch tasks from backend
-const fetchTasks = async () => {
-  try {
-    const res = await axios.get("/tasks");
-    // Filter task assigned_to current user
-    tasks.value = res.data.filter(task => task.assigned_to === auth.user?.id);
-  } catch (err) {
-    console.error("Failed to fetch tasks:", err);
-  }
-};
-onMounted(fetchTasks);
-
 const updateTasksByStatus = () => {
-  tasksByStatus.todo = tasks.value.filter(t => t.status === "todo");
-  tasksByStatus.in_progress = tasks.value.filter(t => t.status === "in_progress");
-  tasksByStatus.done = tasks.value.filter(t => t.status === "done");
+  tasksByStatus.todo = taskStore.tasks.filter(
+    t => t.status === "todo" && t.assigned_to === auth.user?.id
+  );
+  tasksByStatus.in_progress = taskStore.tasks.filter(
+    t => t.status === "in_progress" && t.assigned_to === auth.user?.id
+  );
+  tasksByStatus.done = taskStore.tasks.filter(
+    t => t.status === "done" && t.assigned_to === auth.user?.id
+  );
 };
-watch(tasks, updateTasksByStatus, { deep: true });
-onMounted(updateTasksByStatus);
 
-// Handle drag & drop
-const onDragEnd = async (evt, toColumnStatus) => {
-  const task = evt.item.__vueParentComponent.ctx.element;
-  if (!task) return;
+const updateTaskStatus = async (task, newStatus) => {
+  const oldStatus = task.status;
+  task.status = newStatus; // optimis UI
 
   try {
-    loading.value = true;
-    const res = await axios.patch(`/tasks/${task.id}/status`, { status: toColumnStatus });
-    task.status = res.data.status;
+    await taskStore.updateStatus(task.id, newStatus);
     updateTasksByStatus();
   } catch (err) {
-    console.error("Failed to update task status", err.response || err);
     alert(err.response?.data?.message || "Failed to update task");
-    fetchTasks();
-  } finally {
-    loading.value = false;
+    task.status = oldStatus;
+    updateTasksByStatus();
   }
 };
+
+onMounted(async () => {
+  await taskStore.fetchTasks();
+  updateTasksByStatus();
+});
 </script>
 
 <style scoped>
@@ -103,7 +98,6 @@ const onDragEnd = async (evt, toColumnStatus) => {
   gap: 1rem;
   margin-top: 1.5rem;
 }
-
 .kanban-column {
   flex: 1;
   background: #f3f4f6;
@@ -111,13 +105,11 @@ const onDragEnd = async (evt, toColumnStatus) => {
   border-radius: 10px;
   min-height: 200px;
 }
-
 .kanban-column h2 {
   font-size: 1.1rem;
   font-weight: 600;
   margin-bottom: 1rem;
 }
-
 .kanban-card {
   background: white;
   padding: 0.75rem 1rem;
@@ -125,9 +117,5 @@ const onDragEnd = async (evt, toColumnStatus) => {
   margin-bottom: 0.75rem;
   box-shadow: 0 1px 4px rgba(0,0,0,0.1);
   font-size: 0.95rem;
-  cursor: grab;
-}
-.kanban-card:active {
-  cursor: grabbing;
 }
 </style>

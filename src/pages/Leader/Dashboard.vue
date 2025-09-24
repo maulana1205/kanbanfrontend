@@ -36,7 +36,7 @@
           <h3 class="font-semibold">{{ task.title }}</h3>
           <p v-if="task.description" class="text-sm text-gray-600">{{ task.description }}</p>
           <small class="block mt-1 text-xs text-gray-500">
-            📌 {{ task.division }} | 👤 {{ task.assignee?.name ?? "Unassigned" }}
+            📌 {{ task.division }} | 👤 {{ task.assignee?.Name ?? "" }}
           </small>
         </div>
       </div>

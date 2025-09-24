@@ -18,11 +18,6 @@
           <span v-if="isOpen">Users</span>
         </router-link>
 
-        <router-link to="/admin/tasks" class="menu-item" active-class="active">
-          <i data-feather="list"></i>
-          <span v-if="isOpen">Tasks</span>
-        </router-link>
-
         <router-link to="/admin/reports" class="menu-item" active-class="active">
           <i data-feather="file-text"></i>
           <span v-if="isOpen">Reports</span>

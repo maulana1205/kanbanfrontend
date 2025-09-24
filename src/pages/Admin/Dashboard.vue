@@ -21,7 +21,7 @@
         >
           <h3>{{ task.title }}</h3>
           <p v-if="task.description">{{ task.description }}</p>
-          <small>📌 {{ task.division }} | 👤 {{ task.assignee?.name ?? "Unassigned" }}</small>
+          <small>📌 {{ task.division }} | 👤 {{ task.assignee?.Name ?? "" }}</small>
         </div>
       </div>
     </div>
