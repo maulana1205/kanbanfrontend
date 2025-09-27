@@ -43,14 +43,6 @@
           <span v-else>🚀 Login</span>
         </button>
       </form>
-
-      <!-- Register Link -->
-      <p class="mt-6 text-center text-sm text-gray-200">
-        Don’t have an account?
-        <router-link to="/register" class="text-yellow-300 hover:underline">
-          Sign up
-        </router-link>
-      </p>
     </div>
   </div>
 </template>

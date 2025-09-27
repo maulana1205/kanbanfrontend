@@ -32,7 +32,7 @@
       </div>
 
       <div class="form-group">
-        <input v-model="form.Job_Function_KPI" placeholder="Job Function / KPI" />
+        <input v-model="form.function" placeholder="Function" />
       </div>
 
       <div class="form-group">
@@ -70,7 +70,7 @@ const form = ref({
   NIK: "",
   Division: "",
   Team: "",
-  Job_Function_KPI: "",
+  function: "",
   role: "",
   status: "active",
 });
@@ -95,7 +95,7 @@ async function doRegister() {
       NIK: "",
       Division: "",
       Team: "",
-      Job_Function_KPI: "",
+      function: "",
       role: "",
       status: "active",
     };

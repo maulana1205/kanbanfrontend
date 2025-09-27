@@ -28,53 +28,36 @@
           <span v-if="isOpen">Register Admin</span>
         </router-link>
       </nav>
-
-      <!-- User menu + Logout -->
-      <div class="mt-auto">
-        <!-- User profile dropdown -->
-        <div class="relative user-menu mb-3">
-          <button
-            @click.stop="toggleUserMenu"
-            class="flex items-center w-full bg-gray-800 px-3 py-2 rounded-lg hover:bg-gray-700"
-          >
-            <img
-              :src="user?.avatar ?? `https://ui-avatars.com/api/?name=${user?.name}&background=0D8ABC&color=fff`"
-              class="w-8 h-8 rounded-full object-cover"
-            />
-            <span v-if="isOpen" class="ml-3 text-sm font-medium text-gray-200">{{ user?.name }}</span>
-            <i data-feather="chevron-down" class="w-4 h-4 ml-2 text-gray-400"></i>
-          </button>
-
-          <!-- Dropdown -->
-          <div
-            v-if="showUserMenu"
-            class="absolute left-0 bottom-12 w-full bg-white text-gray-800 rounded-lg shadow-lg overflow-hidden"
-          >
-            <router-link
-              to="/admin/profile"
-              class="block px-4 py-2 text-sm hover:bg-gray-100"
-            >
-              <i data-feather="user" class="inline-block w-4 h-4 mr-2"></i>
-              Profile
-            </router-link>
-          </div>
-        </div>
-
-        <!-- Logout -->
-        <div class="logout">
-          <button @click="logout">
-            <i data-feather="log-out"></i>
-            <span v-if="isOpen">Logout</span>
-          </button>
-        </div>
-      </div>
     </aside>
 
     <!-- Main Content -->
     <div class="main" :class="{ collapsed: !isOpen }">
-      <button class="toggle-btn" @click="isOpen = !isOpen">
-        <i data-feather="menu"></i>
-      </button>
+      <!-- Navbar -->
+      <nav class="navbar flex justify-between items-center mb-6 p-2 bg-blue-600 shadow rounded text-white">
+        <div class="flex items-center">
+          <button class="toggle-btn mr-3 bg-white text-blue-600" @click="isOpen = !isOpen">
+            <i data-feather="menu"></i>
+          </button>
+        </div>
+
+        <div class="relative">
+          <button @click="toggleUserMenu" class="flex items-center space-x-2 text-white">
+  <img
+    :src="user?.avatar ?? `https://ui-avatars.com/api/?name=${user?.Name ?? user?.Name}&background=0D8ABC&color=fff`"
+    class="w-8 h-8 rounded-full object-cover border-2 border-white"
+  />
+  <span class="text-white font-medium ml-2">{{ user?.Name ?? user?.Name }}</span>
+  <i data-feather="chevron-down" class="w-4 h-4"></i>
+</button>
+
+          <div v-if="showUserMenu" class="absolute right-0 mt-2 w-40 bg-white shadow rounded z-50">
+            <router-link to="/admin/profile" class="block px-4 py-2 hover:bg-gray-100 text-gray-800">Profile</router-link>
+            <button @click="logout" class="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600">Logout</button>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Page content -->
       <router-view />
     </div>
   </div>
@@ -91,8 +74,6 @@ const showUserMenu = ref(false);
 const auth = useAuthStore();
 const router = useRouter();
 const route = useRoute();
-
-// ambil user dari store
 const user = auth.user;
 
 function logout() {
@@ -107,7 +88,6 @@ function toggleUserMenu() {
 onMounted(() => nextTick(() => feather.replace()));
 watch(() => route.fullPath, () => nextTick(() => feather.replace()));
 </script>
-
 
 <style scoped>
 .layout {
@@ -145,10 +125,6 @@ watch(() => route.fullPath, () => nextTick(() => feather.replace()));
   gap: 0.5rem;
 }
 
-.logo {
-  width: 30px;
-}
-
 .menu {
   flex-grow: 1;
 }
@@ -176,29 +152,6 @@ watch(() => route.fullPath, () => nextTick(() => feather.replace()));
   color: white;
 }
 
-.logout {
-  margin-top: auto;
-}
-
-.logout button {
-  width: 100%;
-  background: #ef4444;
-  color: white;
-  border: none;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  justify-content: center;
-}
-
-.logout button:hover {
-  background: #dc2626;
-}
-
 /* Main Content */
 .main {
   flex: 1;
@@ -215,12 +168,33 @@ watch(() => route.fullPath, () => nextTick(() => feather.replace()));
 
 /* Toggle button */
 .toggle-btn {
-  background: #2563eb;
+  background: white;
   border: none;
-  color: white;
+  color: #2563eb;
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
   cursor: pointer;
+  margin-right: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #2563eb;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
   margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  color: white;
+}
+
+.navbar h1,
+.navbar span {
+  color: white;
 }
 </style>

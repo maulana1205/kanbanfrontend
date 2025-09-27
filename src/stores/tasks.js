@@ -3,10 +3,10 @@ import axios from "@/plugins/axios";
 
 export const useTaskStore = defineStore("tasks", {
   state: () => ({
-    tasks: [], // full list
+    tasks: [],
   }),
   getters: {
-    byStatus: (state) => (status) => state.tasks.filter(t => t.status === status)
+    byStatus: (state) => (status) => state.tasks.filter(t => t.status === status),
   },
   actions: {
     async fetchTasks() {
@@ -25,8 +25,8 @@ export const useTaskStore = defineStore("tasks", {
       await axios.delete(`/tasks/${id}`);
       this.tasks = this.tasks.filter(t => t.id !== id);
     },
-    async updateStatus(id, status) {
-      await axios.patch(`/tasks/${id}/status`, { status });
+    async updateStatus(id, status, remark = null) {
+      await axios.patch(`/tasks/${id}/status`, { status, remark });
       await this.fetchTasks();
     }
   }

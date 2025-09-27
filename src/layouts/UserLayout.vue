@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen flex flex-col">
-    <Navbar title="User Panel" bgColor="bg-purple-600" base="user" />
+    <NavbarUser title="User Panel" bgColor="bg-purple-600" base="user" />
     <main class="flex-1 p-6">
       <router-view />
     </main>
@@ -8,5 +8,5 @@
 </template>
 
 <script setup>
-import Navbar from "@/components/Navbar.vue";
+import NavbarUser from "../components/NavbarUser.vue";
 </script>

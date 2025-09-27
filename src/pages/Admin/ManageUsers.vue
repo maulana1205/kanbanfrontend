@@ -2,26 +2,6 @@
   <div>
     <h1 class="text-xl font-bold mb-4">Manage Users</h1>
 
-    <!-- Create User -->
-    <form @submit.prevent="handleCreate" class="mb-6 space-y-3">
-      <input v-model="form.NIK" placeholder="NIK" class="input" />
-      <input v-model="form.Name" placeholder="Name" class="input" />
-      <input v-model="form.Division" placeholder="Division" class="input" />
-      <input v-model="form.Team" placeholder="Team" class="input" />
-      <input v-model="form.Job_Function_KPI" placeholder="Job Function KPI" class="input" />
-      <input v-model="form.status" placeholder="Status" class="input" />
-      <input v-model="form.region" placeholder="Region" class="input" />
-      <input v-model="form.email" placeholder="Email" type="email" class="input" />
-      <input v-model="form.password" placeholder="Password" type="password" class="input" />
-      <select v-model="form.role" class="input">
-        <option value="user">User</option>
-        <option value="admin">Admin</option>
-        <option value="leader">Leader</option>
-        <option value="manager">Manager</option>
-      </select>
-      <button type="submit" class="btn">Add User</button>
-    </form>
-
     <!-- User Table -->
     <table class="table-auto w-full border">
       <thead>
@@ -74,7 +54,7 @@ const form = ref({
   Name: "",
   Division: "",
   Team: "",
-  Job_Function_KPI: "",
+  function: "",
   status: "",
   region: "",
   email: "",
@@ -92,7 +72,7 @@ function editUser(user) {
 
 async function handleCreate() {
   await store.createUser(form.value);
-  form.value = { NIK: "", Name: "", Division: "", Team: "", Job_Function_KPI: "", status: "", region: "", email: "", password: "", role: "user" };
+  form.value = { NIK: "", Name: "", Division: "", Team: "", function: "", status: "", region: "", email: "", password: "", role: "user" };
 }
 
 async function handleUpdate() {
