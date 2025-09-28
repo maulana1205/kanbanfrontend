@@ -16,6 +16,8 @@ import AdminDashboard from "@/pages/Admin/Dashboard.vue";
 import ManageUsers from "@/pages/Admin/ManageUsers.vue";
 import AdminProfile from "@/pages/Admin/Profile.vue";
 import Register from "@/pages/Admin/Register.vue";
+import Reports from "@/pages/Admin/Reports.vue";
+
 
 // ✅ Leader
 import LeaderLayout from "@/layouts/LeaderLayout.vue";
@@ -40,6 +42,7 @@ const routes = [
       { path: "users", name: "admin.users", component: ManageUsers },
       { path: "profile", name: "admin.profile", component: AdminProfile },
       { path: "register", name: "admin.register", component: Register },
+      { path: "reports", name: "Reports", component: Reports }
     ],
   },
 

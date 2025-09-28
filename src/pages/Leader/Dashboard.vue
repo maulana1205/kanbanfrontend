@@ -3,10 +3,10 @@
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
       <div>
-        <h1 class="text-2xl font-bold">📊 Leader Dashboard</h1>
+        <h1 class="text-2xl font-bold">📊 Dashboard</h1>
         <p class="text-gray-600">Welcome, {{ auth.user?.Name }}</p>
       </div>
-      <!-- Tombol Create Task -->
+         <!-- Tombol Create Task -->
       <router-link
         to="/leader/create-task"
         class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition"
@@ -38,7 +38,7 @@
             v-for="(user, index) in topUsers"
             :key="user.id"
             class="flex items-center justify-between p-2 rounded border text-sm"
-            :class="[ 
+            :class="[
               index === 0 ? 'bg-yellow-100 border-yellow-400' :
               index === 1 ? 'bg-gray-100 border-gray-400' :
               index === 2 ? 'bg-amber-200 border-amber-500' :
@@ -63,8 +63,12 @@
       >
         <h2>{{ col.label }}</h2>
 
-        <!-- grouping per tanggal -->
-        <div v-for="dayGroup in groupedTasksByStatus(col.status)" :key="dayGroup.date" class="mb-4">
+        <!-- Grouping per tanggal -->
+        <div
+          v-for="dayGroup in groupedTasksByStatus(col.status)"
+          :key="dayGroup.date"
+          class="mb-4"
+        >
           <h3 class="font-semibold text-sm text-gray-500 mb-2">{{ dayGroup.date }}</h3>
           <div
             v-for="task in dayGroup.tasks"
@@ -81,17 +85,41 @@
             <small class="block mt-1 text-xs">🏷 Function: {{ task.task_function ?? task.Function ?? "-" }}</small>
             <small class="block mt-1 text-xs">⚡ Priority: {{ task.priority ?? "Normal" }}</small>
             <small class="block mt-1 text-xs">🗓 {{ task.start_date ?? "-" }} → {{ task.finish_date ?? "-" }}</small>
+
+            <!-- SLA -->
             <small class="block mt-1 text-xs">
               ⏱ SLA: {{ task.sla ?? "-" }} hari
-              <span v-if="task.over_sla_days > 0" class="text-red-500 font-bold">(Over SLA {{ task.over_sla_days }} hari)</span>
+              <span
+                v-if="task.sla_status === 'overdue'"
+                class="text-red-500 font-bold"
+              >
+                (Over SLA)
+              </span>
+              <span
+                v-else-if="task.sla_status === 'on_time'"
+                class="text-green-600 font-bold"
+              >
+                (On SLA)
+              </span>
+              <span v-else class="text-gray-400">(Unknown)</span>
             </small>
+
             <small class="block mt-1 text-xs">👤 Creator: {{ task.creator?.Name ?? "-" }}</small>
             <small class="block mt-1 text-xs">🎯 Assignee: {{ task.assignee?.Name ?? "-" }}</small>
 
             <!-- Progress Bar -->
-            <div v-if="task.progress !== undefined" class="w-full bg-gray-200 rounded h-2 mt-2">
-              <div class="h-2 bg-green-500 rounded" :style="{ width: task.progress + '%' }"></div>
-              <small class="text-xs text-gray-600">{{ task.progress ?? 0 }}%</small>
+            <div class="progress-wrapper mt-2 relative">
+              <div class="progress-bar">
+                <div
+                  class="progress-fill"
+                  :class="task.sla_status === 'overdue' ? 'bg-red-500' : 'bg-green-500'"
+                  :style="{ width: computedProgress(task) + '%' }"
+                ></div>
+              </div>
+              <!-- teks persentase sekarang diposisikan di atas kanan -->
+              <div class="progress-text-inside">
+                {{ computedProgress(task) }}%
+              </div>
             </div>
 
             <small class="block mt-1 text-xs">📦 {{ task.qty ?? "-" }} {{ task.uom ?? "" }} | 🏢 {{ task.vendor ?? "-" }}</small>
@@ -100,7 +128,6 @@
             <p v-if="task.remark" class="mt-2 text-sm text-red-600">📝 Remark: {{ task.remark }}</p>
           </div>
         </div>
-
       </div>
     </div>
   </div>
@@ -136,16 +163,15 @@ async function dropTask(newStatus) {
   draggedTask.value = null;
 }
 
-// Filter tasks (Over SLA tetap tampil, task done sebelumnya di-hide)
+// Filter tasks
 const today = new Date().toISOString().slice(0,10);
 const filteredTasksByStatus = (status) => {
   return taskStore.byStatus(status)
     .filter(task => {
-      if (task.status === "done" && task.updated_at.slice(0,10) !== today && task.over_sla_days === 0) return false;
-      if (["in_progress","review"].includes(task.status) && task.over_sla_days > 0) return true;
+      if (task.status === "done" && task.updated_at.slice(0,10) !== today && task.sla_status === "on_time") return false;
+      if (["in_progress","review"].includes(task.status) && task.sla_status === "overdue") return true;
       return true;
-    })
-    .sort((a,b) => b.over_sla_days - a.over_sla_days);
+    });
 };
 
 // Grouping per tanggal
@@ -191,6 +217,14 @@ const topUsers = computed(() => {
   return Object.values(userMap).sort((a,b) => b.doneCount - a.doneCount);
 });
 
+// Progress otomatis
+function computedProgress(task) {
+  if (task.status === "todo") return 0;
+  if (task.status === "in_progress" || task.status === "review") return 50;
+  if (task.status === "done") return 100;
+  return task.progress ?? 0;
+}
+
 onMounted(async () => {
   await taskStore.fetchTasks();
   renderChart();
@@ -211,4 +245,19 @@ watch(() => taskStore.tasks.map(t => t.status), () => renderChart());
 .kanban-column h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: #374151; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.25rem; }
 .kanban-card { background: white; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 0.75rem; box-shadow: 0 1px 4px rgba(0,0,0,0.1); cursor: grab; transition: transform 0.2s, box-shadow 0.2s; }
 .kanban-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+
+/* Progress Bar Styling */
+.progress-wrapper { margin-top: 0.5rem; position: relative; }
+.progress-bar { width: 100%; background: #e5e7eb; border-radius: 9999px; height: 8px; overflow: hidden; }
+.progress-fill { height: 8px; border-radius: 9999px; transition: width 0.3s ease; }
+
+/* teks persentase sekarang muncul di atas kanan bar */
+.progress-text-inside {
+  position: absolute;
+  top: -18px;
+  right: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #374151;
+}
 </style>
