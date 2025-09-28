@@ -70,8 +70,10 @@
             ></textarea>
             <button
               @click="saveRemark(task)"
-              class="mt-2 px-2 py-1 text-sm bg-yellow-500 text-white rounded"
+              class="mt-2 px-2 py-1 text-sm bg-yellow-500 text-white rounded flex items-center gap-2"
+              :disabled="loadingRemark[task.id]"
             >
+              <span v-if="loadingRemark[task.id]" class="loader"></span>
               Save Remark
             </button>
           </div>
@@ -91,7 +93,7 @@
 </template>
 
 <script setup>
-import { reactive, onMounted } from "vue";
+import { reactive, ref, onMounted } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { useTaskStore } from "@/stores/tasks";
 import axios from "@/plugins/axios";
@@ -113,7 +115,9 @@ const tasksByStatus = reactive({
 
 const today = new Date().toISOString().slice(0, 10);
 
-// Hitung Over SLA
+// Loading state untuk remark
+const loadingRemark = reactive({});
+
 const computeOverSla = (task) => {
   if (!task.sla) return 0;
   const start = task.start_date ? new Date(task.start_date) : new Date(task.created_at);
@@ -164,12 +168,15 @@ const updateTaskStatus = async (task, newStatus) => {
 };
 
 const saveRemark = async (task) => {
+  loadingRemark[task.id] = true;
   try {
     await axios.patch(`/tasks/${task.id}/remark`, { remark: task.remark ?? '' });
     updateTasksByStatus();
     alert('Remark saved successfully');
   } catch (err) {
     alert(err.response?.data?.message || 'Failed to save remark');
+  } finally {
+    loadingRemark[task.id] = false;
   }
 };
 
@@ -215,5 +222,18 @@ textarea {
 }
 button {
   cursor: pointer;
+}
+.loader {
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #fff;
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>

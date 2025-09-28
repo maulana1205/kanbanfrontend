@@ -31,12 +31,7 @@
             v-for="(user, index) in topUsers"
             :key="user.id"
             class="flex items-center justify-between p-2 rounded border text-sm"
-            :class="[
-              index === 0 ? 'bg-yellow-100 border-yellow-400' :
-              index === 1 ? 'bg-gray-100 border-gray-400' :
-              index === 2 ? 'bg-amber-200 border-amber-500' :
-              'bg-white border-gray-200'
-            ]"
+            :class="[index === 0 ? 'bg-yellow-100 border-yellow-400' : index === 1 ? 'bg-gray-100 border-gray-400' : index === 2 ? 'bg-amber-200 border-amber-500' : 'bg-white border-gray-200']"
           >
             <span class="font-medium text-gray-800">{{ user.Name }}</span>
             <span class="text-xs text-gray-500">{{ user.doneCount }} done</span>
@@ -82,18 +77,8 @@
             <!-- SLA -->
             <small class="block mt-1 text-xs">
               ⏱ SLA: {{ task.sla ?? "-" }} hari
-              <span
-                v-if="task.sla_status === 'overdue'"
-                class="text-red-500 font-bold"
-              >
-                (Over SLA)
-              </span>
-              <span
-                v-else-if="task.sla_status === 'on_time'"
-                class="text-green-600 font-bold"
-              >
-                (On SLA)
-              </span>
+              <span v-if="task.sla_status === 'overdue'" class="text-red-500 font-bold">(Over SLA)</span>
+              <span v-else-if="task.sla_status === 'on_time'" class="text-green-600 font-bold">(On SLA)</span>
               <span v-else class="text-gray-400">(Unknown)</span>
             </small>
 
@@ -109,7 +94,6 @@
                   :style="{ width: computedProgress(task) + '%' }"
                 ></div>
               </div>
-              <!-- teks persentase sekarang diposisikan di atas kanan -->
               <div class="progress-text-inside">
                 {{ computedProgress(task) }}%
               </div>
@@ -152,7 +136,11 @@ async function dropTask(newStatus) {
   if (!draggedTask.value) return;
   const allowedStatuses = columns.map(c => c.status);
   if (!allowedStatuses.includes(newStatus)) { draggedTask.value = null; return; }
-  await taskStore.updateStatus(draggedTask.value.id, newStatus);
+
+  // Hitung task_progress otomatis sesuai status
+  const progress = autoProgress(newStatus);
+
+  await taskStore.updateStatus(draggedTask.value.id, newStatus, progress);
   draggedTask.value = null;
 }
 
@@ -161,8 +149,12 @@ const today = new Date().toISOString().slice(0,10);
 const filteredTasksByStatus = (status) => {
   return taskStore.byStatus(status)
     .filter(task => {
-      if (task.status === "done" && task.updated_at.slice(0,10) !== today && task.sla_status === "on_time") return false;
-      if (["in_progress","review"].includes(task.status) && task.sla_status === "overdue") return true;
+      const taskDate = task.updated_at?.slice(0,10) ?? today;
+      const isToday = taskDate === today;
+      const isOverdue = task.sla_status === "overdue";
+
+      if (status === "done") return isToday;
+      if (["todo","in_progress","review"].includes(status)) return isToday || isOverdue;
       return true;
     });
 };
@@ -210,12 +202,17 @@ const topUsers = computed(() => {
   return Object.values(userMap).sort((a,b) => b.doneCount - a.doneCount);
 });
 
-// Progress otomatis
+// Progress otomatis (UI)
 function computedProgress(task) {
-  if (task.status === "todo") return 0;
-  if (task.status === "in_progress" || task.status === "review") return 50;
-  if (task.status === "done") return 100;
-  return task.progress ?? 0;
+  return task.task_progress ?? autoProgress(task.status);
+}
+
+// Hitung progress otomatis sesuai status (untuk dikirim ke backend)
+function autoProgress(status) {
+  if (status === "todo") return 0;
+  if (status === "in_progress" || status === "review") return 50;
+  if (status === "done") return 100;
+  return 0;
 }
 
 onMounted(async () => {
@@ -229,6 +226,8 @@ onMounted(async () => {
 
 watch(() => taskStore.tasks.map(t => t.status), () => renderChart());
 </script>
+
+
 
 <style scoped>
 .stats { display: flex; gap: 2rem; margin: 2rem 0; flex-wrap: wrap; }
